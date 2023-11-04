@@ -1,0 +1,40 @@
+
+#!/bin/bash
+
+# Check if MySQL service is installed
+if ! systemctl status mariadb >/dev/null; then
+	echo "MySQL service is not installed. Installing..."
+	sudo apt-get install mariadb-server mariadb-client -y
+	sudo systemctl start mariadb
+fi
+
+#echo "MySQL secure installation"
+#sudo mysql_secure_installation
+
+# Check if Apache is installed
+if ! command -v apache2 &> /dev/null; then
+	echo "Apache service is not installed. Installing..."
+	sudo apt-get install apache2 -y
+	sudo systemctl start apache2
+	sudo systemctl enable apache2
+fi
+
+
+sudo service apache2 restart
+if [ -d "/var/www/html/DBS401" ]; then
+    # Directory exists, so remove it
+    sudo rm -rf "/var/www/html/DBS401"
+fi
+
+
+# Clone source code from repository
+echo "Clone web source to /var/www/html"
+git clone https://github.com/v0dk4-102/DBS401.git
+sudo mv DBS401 /var/www/html
+sudo cp DBS401/apache2.conf /etc/apache2/apache2.conf
+
+# Import database data
+echo "Import database data"
+sudo mysql < /var/www/html/DBS401/Database/dbs401.sql
+
+echo "Setup complete!"
